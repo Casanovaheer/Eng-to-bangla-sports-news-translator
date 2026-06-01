@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Barça Fans BD — পোস্ট জেনারেটর</title>
+  <title>Barça Fans BD — বাংলা পোস্ট জেনারেটর</title>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -100,6 +100,7 @@
 
     /* ── Custom Selects ── */
     .controls-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .controls-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 
     .custom-select-wrap { position: relative; }
     .custom-select-wrap select {
@@ -265,7 +266,7 @@
       <div class="char-count" id="charCount">0 characters</div>
     </div>
 
-    <!-- Controls -->
+    <!-- Controls row 1: type + length -->
     <div class="controls-row">
       <div>
         <div class="label">পোস্টের ধরন</div>
@@ -293,6 +294,20 @@
       </div>
     </div>
 
+    <!-- Controls row 2: tone/outlet -->
+    <div>
+      <div class="label">লেখার ধাঁচ / সংবাদ মাধ্যম</div>
+      <div class="custom-select-wrap">
+        <select id="toneStyle">
+          <option value="prothom_alo">প্রথম আলো — পরিশীলিত, নিরপেক্ষ, গভীর বিশ্লেষণ</option>
+          <option value="t_sports">টি স্পোর্টস — প্রাণবন্ত, উত্তেজনাপূর্ণ, দর্শকমুখী</option>
+          <option value="jamuna">যমুনা টিভি — সরাসরি, তথ্যভিত্তিক, সংক্ষিপ্ত</option>
+          <option value="daily_star_bn">ডেইলি স্টার বাংলা — আধুনিক, বিশ্লেষণধর্মী</option>
+          <option value="samakal">সমকাল — আবেগঘন, পাঠকমুখী</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Generate -->
     <button class="gen-btn" id="genBtn" onclick="generatePost()">বাংলা পোস্ট তৈরি করো</button>
 
@@ -303,7 +318,7 @@
     <div class="output-section" id="outputSection">
       <div class="output-head">
         <div class="label" style="margin:0">তৈরি পোস্ট</div>
-        <button class="copy-btn" id="copyBtn" onclick="copyPost()">📋 কপি করো</button>
+        <button class="copy-btn" id="copyBtn" onclick="copyPost()">কপি করো</button>
       </div>
       <div class="output-box" id="outputBox"></div>
       <div class="tags" id="tagRow"></div>
@@ -328,7 +343,7 @@
     document.getElementById('charCount').textContent = n.toLocaleString() + ' characters';
   }
 
-  function getSystemPrompt(postType, postLength) {
+  function getSystemPrompt(postType, postLength, toneStyle) {
     const typeMap = {
       match_analysis: 'ম্যাচ বিশ্লেষণ',
       transfer: 'ট্রান্সফার নিউজ',
@@ -336,49 +351,90 @@
       player_focus: 'প্লেয়ার ফোকাস',
       press_conference: 'প্রেস কনফারেন্স',
       injury_news: 'ইনজুরি আপডেট',
-      opinion: 'মতামত/Opinion'
+      opinion: 'মতামত/সম্পাদকীয়'
     };
     const lengthMap = {
       medium: 'প্রায় ২৫০ শব্দ',
       long: 'প্রায় ৪০০ শব্দ',
-      full: 'আর্টিকেলের সম্পূর্ণ তথ্য কভার করো, কোনো তথ্য বাদ দেওয়া যাবে না — যতটুকু দরকার ততটুকু লেখো'
+      full: 'সম্পূর্ণ — আর্টিকেলের প্রতিটি তথ্য কভার করো, কোনো কিছু বাদ দেওয়া যাবে না'
     };
 
-    return `তুমি একজন বাংলাদেশী ফুটবল সাংবাদিক যে FC Barcelona-এর বিশেষজ্ঞ। তোমার কাজ হলো The Athletic-এর ইংরেজি আর্টিকেল পড়ে সেটাকে বাংলাদেশী Barça ফ্যান পেজের জন্য Facebook পোস্ট লেখা।
+    const toneMap = {
+      prothom_alo: `তুমি প্রথম আলোর একজন অভিজ্ঞ ক্রীড়া সাংবাদিক।
+লেখার ধাঁচ:
+- ভাষা পরিশীলিত, শুদ্ধ মানসম্পন্ন বাংলা — কথ্য ভাষা পরিহার করো
+- বাক্য দীর্ঘ ও বিশ্লেষণধর্মী, তথ্য ও প্রেক্ষাপট পাশাপাশি উপস্থাপন করো
+- শিরোনামের মতো একটি সংক্ষিপ্ত ভূমিকা দিয়ে শুরু করো
+- তথ্য উপস্থাপনে নিরপেক্ষ থাকো কিন্তু গভীরতা বজায় রাখো
+- পরিসংখ্যান ও প্রেক্ষাপট উল্লেখ করো
+- প্রথম আলোর অনলাইন ফিচার রিপোর্টের মতো কাঠামো ব্যবহার করো`,
+
+      t_sports: `তুমি টি স্পোর্টস চ্যানেলের একজন উৎসাহী ক্রীড়া সংবাদদাতা।
+লেখার ধাঁচ:
+- ভাষা প্রাণবন্ত, আবেগপূর্ণ কিন্তু তথ্যনির্ভর
+- দর্শককে সরাসরি সম্বোধন করার মতো করে লেখো
+- উত্তেজনাপূর্ণ মুহূর্তগুলো জোর দিয়ে তুলে ধরো
+- সংক্ষিপ্ত ও শক্তিশালী বাক্য ব্যবহার করো
+- খেলার নাটকীয় দিকগুলো সামনে আনো
+- টিভি স্ক্রলের মতো catchy উদ্বোধনী লাইন দিয়ে শুরু করো`,
+
+      jamuna: `তুমি যমুনা টিভির একজন নিউজ রিপোর্টার।
+লেখার ধাঁচ:
+- ভাষা সরাসরি, স্পষ্ট এবং সংক্ষিপ্ত
+- সবচেয়ে গুরুত্বপূর্ণ তথ্যটি প্রথমেই বলো (inverted pyramid)
+- অতিরিক্ত বিশ্লেষণ নয়, তথ্য প্রাধান্য পাবে
+- সংবাদ পাঠের মতো নিরপেক্ষ কণ্ঠস্বর
+- ছোট ছোট অনুচ্ছেদ, প্রতিটিতে একটি করে মূল বিষয়`,
+
+      daily_star_bn: `তুমি ডেইলি স্টার বাংলার একজন ক্রীড়া বিশ্লেষক।
+লেখার ধাঁচ:
+- আধুনিক, শহুরে বাংলা — কিছুটা ইংরেজি মিশ্রিত স্বাভাবিকভাবে
+- বিশ্লেষণধর্মী কিন্তু সহজবোধ্য
+- পরিসংখ্যান ও তুলনামূলক আলোচনা অন্তর্ভুক্ত করো
+- পাঠকের কাছে বিষয়টি নতুন দৃষ্টিতে উপস্থাপন করো`,
+
+      samakal: `তুমি সমকাল পত্রিকার একজন ক্রীড়া কলামিস্ট।
+লেখার ধাঁচ:
+- আবেগঘন, পাঠকের সঙ্গে সংযোগ স্থাপনকারী ভাষা
+- ঘটনার পেছনের মানবিক দিকটি তুলে ধরো
+- কিছুটা সাহিত্যিক আবহ, বর্ণনামূলক উপস্থাপনা
+- পাঠক যেন নিজেকে সেই মুহূর্তে কল্পনা করতে পারে
+- উপসংহারে একটি শক্তিশালী সমাপনী বাক্য`
+    };
+
+    return `${toneMap[toneStyle]}
 
 পোস্টের ধরন: ${typeMap[postType]}
 পোস্টের দৈর্ঘ্য: ${lengthMap[postLength]}
 
-নিয়মাবলী:
-- ভাষা হবে বাংলা, কিন্তু ফুটবল টার্মিনোলজি (যেমন: pressing, high line, xG, buildup, off-side trap) ইংরেজিতেই রাখো
-- লেখার স্টাইল হবে passionate Barça ফ্যানের মতো, কিন্তু তথ্যনির্ভর ও বিশ্লেষণমূলক
-- শুরুতে একটা catchy hook দিয়ে শুরু করো
-- শেষে একটা hashtag section দাও (৩-৫টা বাংলা ও ইংরেজি মিলিয়ে)
-- পোস্টের মাঝে ইমোজি ব্যবহার করো স্বাভাবিকভাবে
-- কোনো ভূমিকা বা ব্যাখ্যা দেওয়ার দরকার নেই, সরাসরি পোস্ট লেখো`;
+অবশ্যই মানতে হবে:
+- কোনো ইমোজি ব্যবহার করা যাবে না — লেখাটি সম্পূর্ণ ইমোজি-মুক্ত হবে
+- কোনো hashtag দেওয়া যাবে না
+- The Athletic-এর ইংরেজি আর্টিকেলের অনুবাদ বলে বোঝা যাবে না — সম্পূর্ণ মৌলিক বাংলা সাংবাদিকতার মতো হবে
+- ফুটবল টার্মিনোলজি (pressing, high line, xG, buildup, off-side trap, false nine, tiki-taka) ইংরেজিতে রাখো
+- খেলোয়াড়দের নাম ইংরেজিতে লেখো
+- কোনো ভূমিকা বা ব্যাখ্যা ছাড়া সরাসরি লেখা শুরু করো`;
   }
 
   async function generatePost() {
-    const apiKey   = document.getElementById('apiKey').value.trim();
-    const article  = document.getElementById('articleText').value.trim();
-    const postType = document.getElementById('postType').value;
+    const apiKey     = document.getElementById('apiKey').value.trim();
+    const article    = document.getElementById('articleText').value.trim();
+    const postType   = document.getElementById('postType').value;
     const postLength = document.getElementById('postLength').value;
-    const errEl    = document.getElementById('errorMsg');
+    const toneStyle  = document.getElementById('toneStyle').value;
+    const errEl      = document.getElementById('errorMsg');
 
     errEl.className = 'error';
 
-    if (!apiKey) { errEl.textContent = '⚠️ Groq API Key দাও আগে!'; errEl.className = 'error show'; return; }
-    if (article.length < 100) { errEl.textContent = '⚠️ আর্টিকেলের টেক্সট paste করো (কমপক্ষে ১০০ character)'; errEl.className = 'error show'; return; }
+    if (!apiKey) { errEl.textContent = 'Groq API Key দাও আগে!'; errEl.className = 'error show'; return; }
+    if (article.length < 100) { errEl.textContent = 'আর্টিকেলের টেক্সট paste করো (কমপক্ষে ১০০ character)'; errEl.className = 'error show'; return; }
 
     document.getElementById('genBtn').disabled = true;
     document.getElementById('loader').className = 'loader show';
     document.getElementById('outputSection').className = 'output-section';
     document.getElementById('tagRow').innerHTML = '';
 
-    // For "full" length, send the entire article. Otherwise cap at 8000 chars.
     const articleContent = postLength === 'full' ? article : article.slice(0, 8000);
-
-    // Token limit: full=8192, long=2048, medium=1200
     const maxTokens = postLength === 'full' ? 8192 : postLength === 'long' ? 2048 : 1200;
 
     try {
@@ -392,8 +448,8 @@
           model: 'llama-3.3-70b-versatile',
           max_tokens: maxTokens,
           messages: [
-            { role: 'system', content: getSystemPrompt(postType, postLength) },
-            { role: 'user', content: `এই আর্টিকেলটা পড়ো এবং বাংলা পোস্ট লেখো:\n\n${articleContent}` }
+            { role: 'system', content: getSystemPrompt(postType, postLength, toneStyle) },
+            { role: 'user', content: `এই আর্টিকেলটা পড়ো এবং বাংলায় লেখো:\n\n${articleContent}` }
           ]
         })
       });
@@ -405,17 +461,8 @@
       document.getElementById('outputBox').textContent = text;
       document.getElementById('outputSection').className = 'output-section show';
 
-      const tags = [...new Set(text.match(/#[\w\u0980-\u09FF]+/g) || [])].slice(0, 8);
-      const tagRow = document.getElementById('tagRow');
-      tags.forEach(t => {
-        const el = document.createElement('span');
-        el.className = 'tag';
-        el.textContent = t;
-        tagRow.appendChild(el);
-      });
-
     } catch (err) {
-      errEl.textContent = '❌ ' + (err.message || 'কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করো।');
+      errEl.textContent = err.message || 'কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করো।';
       errEl.className = 'error show';
     } finally {
       document.getElementById('genBtn').disabled = false;
@@ -430,8 +477,8 @@
       await navigator.clipboard.writeText(text);
       const btn = document.getElementById('copyBtn');
       btn.className = 'copy-btn ok';
-      btn.textContent = '✅ কপি হয়েছে!';
-      setTimeout(() => { btn.className = 'copy-btn'; btn.textContent = '📋 কপি করো'; }, 2200);
+      btn.textContent = 'কপি হয়েছে!';
+      setTimeout(() => { btn.className = 'copy-btn'; btn.textContent = 'কপি করো'; }, 2200);
     } catch(e) {}
   }
 </script>
