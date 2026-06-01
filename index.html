@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barça Fans BD — পোস্ট জেনারেটর</title>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+      background: #07070e;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px 60px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 680px;
+      background: #0d0d18;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.07);
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #A50044 0%, #004D98 100%);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px; color: #fff;
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 16px; font-weight: 700; color: #fff; }
+    .header p  { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+    /* ── Body ── */
+    .body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+    .label {
+      font-size: 11px; font-weight: 600;
+      color: rgba(255,255,255,0.38);
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 8px;
+    }
+
+    /* ── Inputs ── */
+    input[type="text"], input[type="password"], textarea {
+      width: 100%;
+      background: #13131f;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-family: 'Hind Siliguri', sans-serif;
+      font-size: 14px;
+      color: #e4e4e4;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: rgba(165,0,68,0.55); }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+    /* API row */
+    .api-row { display: flex; gap: 8px; align-items: stretch; }
+    .api-row input { flex: 1; font-family: 'Courier New', monospace; font-size: 13px; }
+    .ghost-btn {
+      background: #13131f;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px;
+      padding: 0 16px;
+      color: rgba(255,255,255,0.45);
+      font-size: 13px; font-family: 'Hind Siliguri', sans-serif;
+      cursor: pointer; white-space: nowrap;
+      transition: all 0.18s;
+    }
+    .ghost-btn:hover { background: #1c1c2e; color: rgba(255,255,255,0.8); }
+
+    .hint { font-size: 11px; color: rgba(255,255,255,0.28); margin-top: 6px; }
+    .hint a { color: #6b9fd4; text-decoration: none; }
+    .hint a:hover { text-decoration: underline; }
+
+    /* Textarea */
+    textarea {
+      resize: vertical; min-height: 180px; line-height: 1.65;
+    }
+    .char-count { text-align: right; font-size: 11px; color: rgba(255,255,255,0.22); margin-top: 5px; }
+
+    /* ── Custom Selects ── */
+    .controls-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .custom-select-wrap { position: relative; }
+    .custom-select-wrap select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #1a1033;
+      border: 1px solid rgba(165,0,68,0.45);
+      border-radius: 10px;
+      padding: 11px 38px 11px 14px;
+      font-family: 'Hind Siliguri', sans-serif;
+      font-size: 13px;
+      color: #d4b8e0;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .custom-select-wrap select:focus {
+      border-color: rgba(165,0,68,0.8);
+      background: #1f1040;
+    }
+    .custom-select-wrap select option {
+      background: #1a1033;
+      color: #d4b8e0;
+    }
+    .custom-select-wrap::after {
+      content: '';
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid rgba(165,0,68,0.7);
+      pointer-events: none;
+    }
+
+    /* ── Generate Button ── */
+    .gen-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 11px;
+      border: none;
+      background: linear-gradient(135deg, #A50044, #7b0033);
+      color: #fff;
+      font-family: 'Hind Siliguri', sans-serif;
+      font-size: 16px; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .gen-btn:hover:not(:disabled) { background: linear-gradient(135deg, #c0004f, #A50044); transform: translateY(-1px); }
+    .gen-btn:active:not(:disabled) { transform: translateY(0); }
+    .gen-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: rgba(255,255,255,0.06); }
+
+    /* ── Error ── */
+    .error {
+      background: rgba(165,0,68,0.1);
+      border: 1px solid rgba(165,0,68,0.3);
+      border-radius: 9px;
+      padding: 12px 15px;
+      font-size: 13px; color: #f48fb1;
+      display: none;
+    }
+    .error.show { display: block; }
+
+    /* ── Loader ── */
+    .loader { display: none; justify-content: center; align-items: center; gap: 8px; padding: 24px; }
+    .loader.show { display: flex; }
+    .loader span {
+      width: 9px; height: 9px; border-radius: 50%;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .loader span:nth-child(1) { background: #A50044; }
+    .loader span:nth-child(2) { background: #6b9fd4; animation-delay: 0.2s; }
+    .loader span:nth-child(3) { background: #A50044; animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: scale(0.55); opacity: 0.35; }
+      40%          { transform: scale(1);    opacity: 1; }
+    }
+
+    /* ── Output ── */
+    .output-section { display: none; flex-direction: column; gap: 12px; }
+    .output-section.show { display: flex; }
+
+    .output-head { display: flex; align-items: center; justify-content: space-between; }
+    .copy-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 7px;
+      padding: 6px 14px;
+      font-size: 12px; color: rgba(255,255,255,0.45);
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: all 0.18s;
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.8); }
+    .copy-btn.ok { color: #4caf88; border-color: rgba(76,175,136,0.4); }
+
+    .output-box {
+      background: #13131f;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 11px;
+      padding: 18px;
+      font-family: 'Hind Siliguri', sans-serif;
+      font-size: 15px; color: #e8e8e8;
+      line-height: 1.8; white-space: pre-wrap; word-break: break-word;
+    }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tag {
+      background: rgba(0,77,152,0.18);
+      border: 1px solid rgba(0,77,152,0.38);
+      border-radius: 6px;
+      padding: 4px 11px;
+      font-size: 12px; color: #7ab0df;
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+
+    /* ── Groq badge ── */
+    .groq-badge {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 11px; color: rgba(255,255,255,0.22);
+      padding-top: 4px;
+    }
+    .groq-badge span { color: rgba(255,150,50,0.6); font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">B</div>
+    <div>
+      <h1>Barça Fans BD — পোস্ট জেনারেটর</h1>
+      <p>The Athletic → বাংলা সাংবাদিকতার ঢঙে FB পোস্ট</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- API Key -->
+    <div>
+      <div class="label">Groq API Key</div>
+      <div class="api-row">
+        <input type="password" id="apiKey" placeholder="gsk_..." />
+        <button class="ghost-btn" onclick="toggleKey()">দেখাও</button>
+      </div>
+      <p class="hint">Key শুধু এই session-এ ব্যবহার হবে, কোথাও save হবে না। &nbsp;<a href="https://console.groq.com/keys" target="_blank">Key নিতে এখানে যাও ↗</a></p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Article -->
+    <div>
+      <div class="label">The Athletic আর্টিকেল paste করো</div>
+      <textarea id="articleText" placeholder="আর্টিকেলের পুরো টেক্সট এখানে paste করো..." oninput="updateCount()"></textarea>
+      <div class="char-count" id="charCount">0 characters</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <div>
+        <div class="label">পোস্টের ধরন</div>
+        <div class="custom-select-wrap">
+          <select id="postType">
+            <option value="match_analysis">ম্যাচ বিশ্লেষণ</option>
+            <option value="transfer">ট্রান্সফার নিউজ</option>
+            <option value="tactics">ট্যাকটিক্স আলোচনা</option>
+            <option value="player_focus">প্লেয়ার ফোকাস</option>
+            <option value="press_conference">প্রেস কনফারেন্স</option>
+            <option value="injury_news">ইনজুরি আপডেট</option>
+            <option value="opinion">মতামত / Opinion</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="label">পোস্টের দৈর্ঘ্য</div>
+        <div class="custom-select-wrap">
+          <select id="postLength">
+            <option value="medium">মাঝারি (~২৫০ শব্দ)</option>
+            <option value="long">লম্বা (~৪০০ শব্দ)</option>
+            <option value="full">পুরো আর্টিকেল (সম্পূর্ণ)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="gen-btn" id="genBtn" onclick="generatePost()">বাংলা পোস্ট তৈরি করো</button>
+
+    <div class="error" id="errorMsg"></div>
+    <div class="loader" id="loader"><span></span><span></span><span></span></div>
+
+    <!-- Output -->
+    <div class="output-section" id="outputSection">
+      <div class="output-head">
+        <div class="label" style="margin:0">তৈরি পোস্ট</div>
+        <button class="copy-btn" id="copyBtn" onclick="copyPost()">📋 কপি করো</button>
+      </div>
+      <div class="output-box" id="outputBox"></div>
+      <div class="tags" id="tagRow"></div>
+    </div>
+
+    <div class="groq-badge">Powered by <span>Groq</span> · llama-3.3-70b-versatile · ফ্রি &amp; দ্রুত</div>
+
+  </div>
+</div>
+
+<script>
+  let keyVisible = false;
+
+  function toggleKey() {
+    keyVisible = !keyVisible;
+    document.getElementById('apiKey').type = keyVisible ? 'text' : 'password';
+    document.querySelector('.ghost-btn').textContent = keyVisible ? 'লুকাও' : 'দেখাও';
+  }
+
+  function updateCount() {
+    const n = document.getElementById('articleText').value.length;
+    document.getElementById('charCount').textContent = n.toLocaleString() + ' characters';
+  }
+
+  function getSystemPrompt(postType, postLength) {
+    const typeMap = {
+      match_analysis: 'ম্যাচ বিশ্লেষণ',
+      transfer: 'ট্রান্সফার নিউজ',
+      tactics: 'ট্যাকটিক্স আলোচনা',
+      player_focus: 'প্লেয়ার ফোকাস',
+      press_conference: 'প্রেস কনফারেন্স',
+      injury_news: 'ইনজুরি আপডেট',
+      opinion: 'মতামত/Opinion'
+    };
+    const lengthMap = {
+      medium: 'প্রায় ২৫০ শব্দ',
+      long: 'প্রায় ৪০০ শব্দ',
+      full: 'আর্টিকেলের সম্পূর্ণ তথ্য কভার করো, কোনো তথ্য বাদ দেওয়া যাবে না — যতটুকু দরকার ততটুকু লেখো'
+    };
+
+    return `তুমি একজন বাংলাদেশী ফুটবল সাংবাদিক যে FC Barcelona-এর বিশেষজ্ঞ। তোমার কাজ হলো The Athletic-এর ইংরেজি আর্টিকেল পড়ে সেটাকে বাংলাদেশী Barça ফ্যান পেজের জন্য Facebook পোস্ট লেখা।
+
+পোস্টের ধরন: ${typeMap[postType]}
+পোস্টের দৈর্ঘ্য: ${lengthMap[postLength]}
+
+নিয়মাবলী:
+- ভাষা হবে বাংলা, কিন্তু ফুটবল টার্মিনোলজি (যেমন: pressing, high line, xG, buildup, off-side trap) ইংরেজিতেই রাখো
+- লেখার স্টাইল হবে passionate Barça ফ্যানের মতো, কিন্তু তথ্যনির্ভর ও বিশ্লেষণমূলক
+- শুরুতে একটা catchy hook দিয়ে শুরু করো
+- শেষে একটা hashtag section দাও (৩-৫টা বাংলা ও ইংরেজি মিলিয়ে)
+- পোস্টের মাঝে ইমোজি ব্যবহার করো স্বাভাবিকভাবে
+- কোনো ভূমিকা বা ব্যাখ্যা দেওয়ার দরকার নেই, সরাসরি পোস্ট লেখো`;
+  }
+
+  async function generatePost() {
+    const apiKey   = document.getElementById('apiKey').value.trim();
+    const article  = document.getElementById('articleText').value.trim();
+    const postType = document.getElementById('postType').value;
+    const postLength = document.getElementById('postLength').value;
+    const errEl    = document.getElementById('errorMsg');
+
+    errEl.className = 'error';
+
+    if (!apiKey) { errEl.textContent = '⚠️ Groq API Key দাও আগে!'; errEl.className = 'error show'; return; }
+    if (article.length < 100) { errEl.textContent = '⚠️ আর্টিকেলের টেক্সট paste করো (কমপক্ষে ১০০ character)'; errEl.className = 'error show'; return; }
+
+    document.getElementById('genBtn').disabled = true;
+    document.getElementById('loader').className = 'loader show';
+    document.getElementById('outputSection').className = 'output-section';
+    document.getElementById('tagRow').innerHTML = '';
+
+    // For "full" length, send the entire article. Otherwise cap at 8000 chars.
+    const articleContent = postLength === 'full' ? article : article.slice(0, 8000);
+
+    // Token limit: full=8192, long=2048, medium=1200
+    const maxTokens = postLength === 'full' ? 8192 : postLength === 'long' ? 2048 : 1200;
+
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: maxTokens,
+          messages: [
+            { role: 'system', content: getSystemPrompt(postType, postLength) },
+            { role: 'user', content: `এই আর্টিকেলটা পড়ো এবং বাংলা পোস্ট লেখো:\n\n${articleContent}` }
+          ]
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Groq API error');
+
+      const text = data.choices?.[0]?.message?.content || '';
+      document.getElementById('outputBox').textContent = text;
+      document.getElementById('outputSection').className = 'output-section show';
+
+      const tags = [...new Set(text.match(/#[\w\u0980-\u09FF]+/g) || [])].slice(0, 8);
+      const tagRow = document.getElementById('tagRow');
+      tags.forEach(t => {
+        const el = document.createElement('span');
+        el.className = 'tag';
+        el.textContent = t;
+        tagRow.appendChild(el);
+      });
+
+    } catch (err) {
+      errEl.textContent = '❌ ' + (err.message || 'কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করো।');
+      errEl.className = 'error show';
+    } finally {
+      document.getElementById('genBtn').disabled = false;
+      document.getElementById('loader').className = 'loader';
+    }
+  }
+
+  async function copyPost() {
+    const text = document.getElementById('outputBox').textContent;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyBtn');
+      btn.className = 'copy-btn ok';
+      btn.textContent = '✅ কপি হয়েছে!';
+      setTimeout(() => { btn.className = 'copy-btn'; btn.textContent = '📋 কপি করো'; }, 2200);
+    } catch(e) {}
+  }
+</script>
+</body>
+</html>
