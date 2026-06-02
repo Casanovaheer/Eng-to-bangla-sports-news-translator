@@ -249,12 +249,12 @@
 
     <!-- API Key -->
     <div>
-      <div class="label">Google Gemini API Key <span style="color:#4caf88;font-size:10px;font-weight:500;letter-spacing:0;text-transform:none;">— সম্পূর্ণ বিনামূল্যে</span></div>
+      <div class="label">Groq API Key</div>
       <div class="api-row">
-        <input type="password" id="apiKey" placeholder="AIza..." />
+        <input type="password" id="apiKey" placeholder="gsk_..." />
         <button class="ghost-btn" onclick="toggleKey()">দেখাও</button>
       </div>
-      <p class="hint">Key শুধু এই session-এ ব্যবহার হবে, কোথাও save হবে না। &nbsp;<a href="https://aistudio.google.com/apikey" target="_blank">এখান থেকে নাও: aistudio.google.com/apikey ↗</a></p>
+      <p class="hint">Key শুধু এই session-এ ব্যবহার হবে, কোথাও save হবে না। &nbsp;<a href="https://console.groq.com/keys" target="_blank">Key নিতে এখানে যাও ↗</a></p>
     </div>
 
     <div class="divider"></div>
@@ -322,7 +322,7 @@
       <div class="tags" id="tagRow"></div>
     </div>
 
-    <div class="groq-badge">Powered by <span>Google Gemini</span> · gemini-2.0-flash · ফ্রি &amp; দ্রুত</div>
+    <div class="groq-badge">Powered by <span>Groq</span> · llama-3.3-70b-versatile · ফ্রি &amp; দ্রুত</div>
 
   </div>
 </div>
@@ -443,38 +443,6 @@ ${wordSubRules}
 - কোনো ভূমিকা বা ব্যাখ্যা ছাড়া সরাসরি লেখা শুরু করো`;
   }
 
-  async function callGemini(apiKey, prompt, maxTokens) {
-    const model = 'gemini-2.0-flash';
-    const body = JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: maxTokens }
-    });
-
-    // Method 1: Bearer token (for AQ. / new format keys)
-    const resBearerAttempt = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body
-      }
-    );
-    const dataBearer = await resBearerAttempt.json();
-    if (resBearerAttempt.ok) return dataBearer;
-
-    // Method 2: Query param (for AIzaSy... keys)
-    const resQuery = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
-    );
-    const dataQuery = await resQuery.json();
-    if (resQuery.ok) return dataQuery;
-
-    // Both failed — throw the most useful error
-    const errMsg = dataQuery.error?.message || dataBearer.error?.message || 'API error';
-    throw new Error(errMsg);
-  }
-
   async function generatePost() {
     const apiKey     = document.getElementById('apiKey').value.trim();
     const article    = document.getElementById('articleText').value.trim();
@@ -485,23 +453,38 @@ ${wordSubRules}
 
     errEl.className = 'error';
 
-    if (!apiKey) { errEl.textContent = 'Google Gemini API Key দাও আগে!'; errEl.className = 'error show'; return; }
+    if (!apiKey) { errEl.textContent = 'Groq API Key দাও আগে!'; errEl.className = 'error show'; return; }
     if (article.length < 100) { errEl.textContent = 'আর্টিকেলের টেক্সট paste করো (কমপক্ষে ১০০ character)'; errEl.className = 'error show'; return; }
 
     document.getElementById('genBtn').disabled = true;
     document.getElementById('loader').className = 'loader show';
     document.getElementById('outputSection').className = 'output-section';
+    document.getElementById('tagRow').innerHTML = '';
 
-    const articleContent = postLength === 'full' ? article : article.slice(0, 12000);
-    const systemPrompt = getSystemPrompt(postType, postLength, toneStyle);
-    const fullPrompt = `${systemPrompt}\n\nএই আর্টিকেলটা পড়ো এবং বাংলায় লেখো:\n\n${articleContent}`;
+    const articleContent = postLength === 'full' ? article : article.slice(0, 8000);
     const maxTokens = postLength === 'full' ? 8192 : postLength === 'long' ? 2048 : 1200;
 
     try {
-      const data = await callGemini(apiKey, fullPrompt, maxTokens);
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (!text) throw new Error('কোনো উত্তর পাওয়া যায়নি — আবার চেষ্টা করো।');
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: maxTokens,
+          messages: [
+            { role: 'system', content: getSystemPrompt(postType, postLength, toneStyle) },
+            { role: 'user', content: `এই আর্টিকেলটা পড়ো এবং বাংলায় লেখো:\n\n${articleContent}` }
+          ]
+        })
+      });
 
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Groq API error');
+
+      const text = data.choices?.[0]?.message?.content || '';
       document.getElementById('outputBox').textContent = text;
       document.getElementById('outputSection').className = 'output-section show';
 
